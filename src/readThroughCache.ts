@@ -1,4 +1,10 @@
-// src/readThroughCache.ts
+// Clean up when no longer needed
+  destroy(): void {
+    if (this.backoffTimer) {
+      clearTimeout(this.backoffTimer);
+      this.backoffTimer = undefined;
+    }
+  }// src/readThroughCache.ts
 import {Client, DeviceStatus, ClientResponse} from './sleepme/client';
 import {Logger} from 'homebridge';
 import axios, {AxiosError} from 'axios';
@@ -12,6 +18,8 @@ class ReadThroughCache {
   private lastErrorCode?: number;
   private lastErrorMessage?: string;
   
+  private backoffTimer?: NodeJS.Timeout;
+
   constructor(
     readonly client: Client, 
     readonly deviceId: string, 

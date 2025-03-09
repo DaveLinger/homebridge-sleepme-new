@@ -2,6 +2,7 @@
 import {CharacteristicValue} from 'homebridge';
 import {SleepmePlatformAccessory} from '../platformAccessory.js';
 import {ApiQueue} from '../queue/apiQueue.js';
+import {celsiusToFahrenheit} from '../utils/temperature.js';
 
 interface Setters {
   setTargetState(value: CharacteristicValue): Promise<void>
@@ -29,7 +30,7 @@ export function newSetters(
     
     setTargetTemp: (value: CharacteristicValue) => {
       const tempC = value as number;
-      const tempF = Math.floor((tempC * (9 / 5)) + 32);
+      const tempF = celsiusToFahrenheit(tempC);
       platform.log.info(`Setting TargetTemperature for ${accessory.displayName} to ${tempF}°F (${tempC}°C)`);
       
       // Immediately enqueue the API request

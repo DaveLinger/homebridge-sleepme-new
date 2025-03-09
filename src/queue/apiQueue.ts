@@ -2,6 +2,7 @@
 import { Logger } from 'homebridge';
 import { Client, DeviceStatus } from '../sleepme/client';
 import ReadThroughCache from '../readThroughCache';
+import { celsiusToFahrenheit, expectedCelsiusAfterConversion, temperaturesEqual } from '../utils/temperature';
 
 export type QueueItemType = 'temperature' | 'state';
 
@@ -192,8 +193,13 @@ export class ApiQueue {
         this.logger.debug(`Processing ${item.type} update for device ${item.id}: ${item.value}`);
         
         if (item.type === 'temperature') {
-          // Assuming the value is in Celsius, as in the original code
-          const tempF = Math.floor((item.value * (9 / 5)) + 32);
+          // Convert to Fahrenheit using our utility function for proper rounding
+          const tempF = celsiusToFahrenheit(item.value);
+          
+          // Store the expected value after conversion round-trip for verification
+          const expectedBackConversion = expectedCelsiusAfterConversion(item.value);
+          this.logger.debug(`Temperature conversion: ${item.value}°C → ${tempF}°F (expected back as ${expectedBackConversion}°C)`);
+          
           await this.client.setTemperatureFahrenheit(item.id, tempF);
           this.logger.info(`Set temperature for device ${item.id} to ${tempF}°F (${item.value}°C)`);
         } else if (item.type === 'state') {
@@ -250,27 +256,28 @@ export class ApiQueue {
       const actualState = response.data;
       let mismatch = false;
       
-      // Check if temperature matches (with 0.5°C tolerance)
+      // Check if temperature matches with proper temperature conversion awareness
       if (desiredState.targetTemperatureC !== undefined) {
-        const temperatureDifference = Math.abs(actualState.control.set_temperature_c - desiredState.targetTemperatureC);
-        const tolerance = 0.5; // Allow 0.5°C difference to account for rounding
+        // Get the expected Celsius value after conversion round-trip
+        const expectedCelsius = expectedCelsiusAfterConversion(desiredState.targetTemperatureC);
+        const actualCelsius = actualState.control.set_temperature_c;
         
-        if (temperatureDifference > tolerance) {
+        if (!temperaturesEqual(actualCelsius, expectedCelsius)) {
           this.logger.warn(
             `Temperature mismatch for device ${deviceId}: ` +
-            `desired=${desiredState.targetTemperatureC}°C, ` +
-            `actual=${actualState.control.set_temperature_c}°C`
+            `desired=${desiredState.targetTemperatureC}°C (expected ${expectedCelsius}°C after conversion), ` +
+            `actual=${actualCelsius}°C`
           );
           mismatch = true;
           
           // Re-queue the temperature update
           this.enqueue(deviceId, 'temperature', desiredState.targetTemperatureC);
-        } else if (temperatureDifference > 0.01) {
-          // There is a small difference, but within tolerance
+        } else {
+          // There's a small difference, but it's due to Celsius-Fahrenheit conversion
           this.logger.debug(
-            `Temperature within tolerance for device ${deviceId}: ` +
-            `desired=${desiredState.targetTemperatureC}°C, ` +
-            `actual=${actualState.control.set_temperature_c}°C (diff: ${temperatureDifference.toFixed(2)}°C)`
+            `Temperature matches for device ${deviceId} after accounting for conversion: ` +
+            `desired=${desiredState.targetTemperatureC}°C (expected ${expectedCelsius}°C), ` +
+            `actual=${actualCelsius}°C`
           );
         }
       }
