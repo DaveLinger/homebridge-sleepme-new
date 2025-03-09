@@ -21,7 +21,7 @@ export function createThermostatService(
   apiQueue.registerCache(deviceId, readThroughCache);
   
   // Create setters with the API queue
-  const setters = newSetters(platformAccessory, readThroughCache, apiQueue, deviceId);
+  const setters = newSetters(platformAccessory, apiQueue, deviceId);
 
   thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState)
     .onGet(() => readThroughCache.get()
