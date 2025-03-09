@@ -2,7 +2,7 @@
 import {CharacteristicValue} from 'homebridge';
 import {SleepmePlatformAccessory} from '../platformAccessory.js';
 import {ApiQueue} from '../queue/apiQueue.js';
-import {celsiusToFahrenheit} from '../utils.js';
+import {celsiusToFahrenheit} from '../utils';
 
 interface Setters {
   setTargetState(value: CharacteristicValue): Promise<void>

@@ -2,7 +2,7 @@
 import { Logger } from 'homebridge';
 import { Client, DeviceStatus } from '../sleepme/client.js';
 import ReadThroughCache from '../readThroughCache.js';
-import { celsiusToFahrenheit, expectedCelsiusAfterConversion, temperaturesEqual } from '../utils.js';
+import { celsiusToFahrenheit, expectedCelsiusAfterConversion, temperaturesEqual } from '../utils';
 
 export type QueueItemType = 'temperature' | 'state';
 
