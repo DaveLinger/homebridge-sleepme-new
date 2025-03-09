@@ -1,11 +1,4 @@
-// Clean up when no longer needed
-  destroy(): void {
-    if (this.backoffTimer) {
-      clearTimeout(this.backoffTimer);
-      this.backoffTimer = undefined;
-    }
-  }
-}// src/readThroughCache.ts
+// src/readThroughCache.ts
 import {Client, DeviceStatus, ClientResponse} from './sleepme/client';
 import {Logger} from 'homebridge';
 import axios, {AxiosError} from 'axios';
@@ -18,9 +11,8 @@ class ReadThroughCache {
   private errorCount = 0;
   private lastErrorCode?: number;
   private lastErrorMessage?: string;
-  
   private backoffTimer?: NodeJS.Timeout;
-
+  
   constructor(
     readonly client: Client, 
     readonly deviceId: string, 
@@ -82,6 +74,21 @@ class ReadThroughCache {
           );
           this.responseExpireAt = new Date(new Date().valueOf() + backoffDuration);
           this.log.warn(`Error fetching device status. Using cached value and backing off until ${this.responseExpireAt}`);
+          
+          // Clear any existing backoff timer
+          if (this.backoffTimer) {
+            clearTimeout(this.backoffTimer);
+          }
+          
+          // Set up automatic retry after backoff period
+          this.backoffTimer = setTimeout(() => {
+            this.log.info(`Backoff period ended, attempting to refresh device status`);
+            this.backoffTimer = undefined;
+            this.refresh().catch(err => {
+              this.log.error(`Auto-retry after backoff failed: ${err}`);
+            });
+          }, backoffDuration);
+          
           return this.value;
         }
         
@@ -116,6 +123,14 @@ class ReadThroughCache {
   // Check if we're currently in an error state
   hasError(): boolean {
     return this.errorCount > 0;
+  }
+  
+  // Clean up when no longer needed
+  destroy(): void {
+    if (this.backoffTimer) {
+      clearTimeout(this.backoffTimer);
+      this.backoffTimer = undefined;
+    }
   }
 }
 
