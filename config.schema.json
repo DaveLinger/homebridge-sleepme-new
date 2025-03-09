@@ -1,0 +1,34 @@
+{
+  "pluginAlias": "SleepmeHomebridgePlugin",
+  "pluginType": "platform",
+  "singular": true,
+  "headerDisplay": "To create Sleepme API keys, set up a developer account [here](https://docs.developer.sleep.me/docs/)",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "required": true,
+        "default": "Homebridge Sleepme"
+      },
+      "api_keys": {
+        "title": "API Keys",
+        "type": "array",
+        "items": {
+          "title": "Key",
+          "type": "string"
+        }
+      },
+      "sleepme_api_url": {
+        "title": "Sleepme API URL",
+        "type": "string",
+        "required": true,
+        "default": "https://api.developer.sleep.me",
+        "condition": {
+          "functionBody": "return false;"
+        }
+      }
+    }
+  }
+}
