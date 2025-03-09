@@ -1,3 +1,4 @@
+// src/platform.ts
 import {
   API,
   DynamicPlatformPlugin,
@@ -18,6 +19,9 @@ export type PluginConfig = {
   api_keys: string[];
   platform: string;
   sleepme_api_url: string;
+  api_interval_ms?: number;
+  verification_delay_ms?: number; 
+  cache_ttl_ms?: number;
 };
 
 const validateConfig = (config: PlatformConfig): [boolean, string] => {
@@ -102,22 +106,26 @@ export class SleepmePlatform implements DynamicPlatformPlugin {
         r.data.forEach(device => {
           const uuid = this.api.hap.uuid.generate(device.id);
           const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
+          
+          // Add global queue configuration
+          const deviceConfig = {
+            apiIntervalMs: this.config.api_interval_ms,
+            verificationDelayMs: this.config.verification_delay_ms,
+            cacheTtlMs: this.config.cache_ttl_ms
+          };
+          
           if (existingAccessory) {
             // the accessory already exists
             this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
 
-            // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. e.g.:
-            // existingAccessory.context.device = device;
-            // this.api.updatePlatformAccessories([existingAccessory]);
+            // Update the accessory context with the latest device info and config
+            existingAccessory.context.device = device;
+            existingAccessory.context.apiKey = key;
+            existingAccessory.context.config = deviceConfig;
+            this.api.updatePlatformAccessories([existingAccessory]);
 
             // create the accessory handler for the restored accessory
-            // this is imported from `platformAccessory.ts`
             new SleepmePlatformAccessory(this, existingAccessory);
-
-            // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, e.g.:
-            // remove platform accessories when no longer present
-            // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
-            // this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
           } else {
             // the accessory does not yet exist, so we need to create it
             this.log.info('Adding new accessory:', device.name);
@@ -125,12 +133,11 @@ export class SleepmePlatform implements DynamicPlatformPlugin {
             const accessory = new this.api.platformAccessory(device.name, uuid);
 
             // store a copy of the device object in the `accessory.context`
-            // the `context` property can be used to store any data about the accessory you may need
             accessory.context.device = device;
             accessory.context.apiKey = key;
+            accessory.context.config = deviceConfig;
 
             // create the accessory handler for the newly create accessory
-            // this is imported from `platformAccessory.ts`
             new SleepmePlatformAccessory(this, accessory);
             // link the accessory to your platform
             this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
@@ -140,7 +147,11 @@ export class SleepmePlatform implements DynamicPlatformPlugin {
         if (axios.isAxiosError(err)) {
           if (err.status === 403) {
             this.log.error(`the token ending in ${key.substring(key.length - 4)} is invalid.`);
+          } else {
+            this.log.error(`API error with token ending in ${key.substring(key.length - 4)}: ${err.message}`);
           }
+        } else {
+          this.log.error(`Unknown error with token ending in ${key.substring(key.length - 4)}: ${err}`);
         }
       });
     }));

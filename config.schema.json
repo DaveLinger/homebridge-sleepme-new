@@ -20,6 +20,30 @@
           "type": "string"
         }
       },
+      "api_interval_ms": {
+        "title": "API Request Interval (ms)",
+        "type": "integer",
+        "description": "Minimum time between API requests in milliseconds (rate limiting)",
+        "default": 2000,
+        "minimum": 1000,
+        "maximum": 60000
+      },
+      "verification_delay_ms": {
+        "title": "Verification Delay (ms)",
+        "type": "integer",
+        "description": "Time to wait after making changes before verifying device state (milliseconds)",
+        "default": 30000,
+        "minimum": 5000,
+        "maximum": 300000
+      },
+      "cache_ttl_ms": {
+        "title": "Cache TTL (ms)",
+        "type": "integer",
+        "description": "Time to keep cached device status before refreshing (milliseconds)",
+        "default": 1000,
+        "minimum": 500,
+        "maximum": 60000
+      },
       "sleepme_api_url": {
         "title": "Sleepme API URL",
         "type": "string",
