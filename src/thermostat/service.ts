@@ -4,6 +4,12 @@ import ReadThroughCache from '../readThroughCache.js';
 import {NewMapper} from './thermostatMapper.js';
 import {newSetters} from './setters.js';
 
+// Define temperature range constants
+const MIN_TEMP_F = 54;
+const MAX_TEMP_F = 116;
+const MIN_TEMP_C = 12.2; // 54F converted to Celsius
+const MAX_TEMP_C = 46.7; // 116F converted to Celsius
+
 export function createThermostatService(
   platformAccessory: SleepmePlatformAccessory,
   readThroughCache: ReadThroughCache,
@@ -37,9 +43,24 @@ export function createThermostatService(
       }));
 
   thermostatService.getCharacteristic(Characteristic.TargetTemperature)
+    .setProps({
+      minValue: MIN_TEMP_C,
+      maxValue: MAX_TEMP_C,
+      minStep: 0.5
+    })
     .onGet(() => readThroughCache.get()
       .then(response => {
-        return response ? response.data.control.set_temperature_c : null;
+        if (!response) return null;
+        
+        // Handle special API values for LOW/HIGH
+        const tempF = response.data.control.set_temperature_f;
+        if (tempF === -1) {
+          return MIN_TEMP_C; // Map LOW (-1) to minimum temperature
+        } else if (tempF === 999) {
+          return MAX_TEMP_C; // Map HIGH (999) to maximum temperature
+        }
+        
+        return response.data.control.set_temperature_c;
       }))
     .onSet(setters.setTargetTemp);
 

@@ -1,6 +1,14 @@
 import {DeviceStatus} from '../sleepme/client';
 import {SleepmePlatform} from '../platform';
 
+// Define temperature constants
+const MIN_TEMP_F = 54;
+const MAX_TEMP_F = 116;
+const MIN_TEMP_C = 12.2;  // 54F converted to Celsius
+const MAX_TEMP_C = 46.7;  // 116F converted to Celsius
+const LOW_TEMP_MODE = -1;
+const HIGH_TEMP_MODE = 999;
+
 interface Mapper {
   toCurrentHeatingCoolingState: (status: DeviceStatus) => 0 | 1 | 2;
   toTargetHeatingCoolingState: (status: DeviceStatus) => 0 | 3;
@@ -13,10 +21,20 @@ class RealMapper implements Mapper {
 
   toCurrentHeatingCoolingState(status: DeviceStatus): 0 | 1 | 2 {
     const {OFF, COOL, HEAT} = this.platform.Characteristic.CurrentHeatingCoolingState;
+    
     if (status.control.thermal_control_status === 'standby') {
       return OFF;
     }
-    if (status.control.set_temperature_c <= status.status.water_temperature_c) {
+    
+    // Get the target temperature, handling special cases
+    let targetTempC = status.control.set_temperature_c;
+    if (status.control.set_temperature_f === LOW_TEMP_MODE) {
+      targetTempC = MIN_TEMP_C;
+    } else if (status.control.set_temperature_f === HIGH_TEMP_MODE) {
+      targetTempC = MAX_TEMP_C;
+    }
+    
+    if (targetTempC <= status.status.water_temperature_c) {
       return COOL;
     }
     return HEAT;
@@ -37,4 +55,3 @@ class RealMapper implements Mapper {
 export function NewMapper(platform: SleepmePlatform): Mapper {
   return new RealMapper(platform);
 }
-
