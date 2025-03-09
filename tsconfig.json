@@ -20,11 +20,10 @@
     "noImplicitAny": false
   },
   "include": [
-    "eslint.config.mjs",
     "node_modules/hap-nodejs/@types/",
     "homebridge-ui",
     "src/**/*.ts"
   ],
-  "exclude": ["src/fakeserver/**.*", "src/**/*.test.ts"],
+  "exclude": ["src/fakeserver/**.*", "src/**/*.test.ts", "eslint.config.mjs"],
   "files": ["src/index.ts"]
 }
