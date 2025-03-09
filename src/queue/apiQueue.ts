@@ -2,7 +2,24 @@
 import { Logger } from 'homebridge';
 import { Client, DeviceStatus } from '../sleepme/client.js';
 import ReadThroughCache from '../readThroughCache.js';
-import { celsiusToFahrenheit, expectedCelsiusAfterConversion, temperaturesEqual } from '../utils.js';
+
+// Define temperature utilities inline to avoid import issues
+function celsiusToFahrenheit(tempC: number): number {
+  return Math.round((tempC * 9/5) + 32);
+}
+
+function fahrenheitToCelsius(tempF: number): number {
+  return Math.round(((tempF - 32) * 5/9) * 10) / 10;
+}
+
+function temperaturesEqual(temp1: number, temp2: number, tolerance = 0.6): boolean {
+  return Math.abs(temp1 - temp2) <= tolerance;
+}
+
+function expectedCelsiusAfterConversion(tempC: number): number {
+  const tempF = celsiusToFahrenheit(tempC);
+  return fahrenheitToCelsius(tempF);
+}
 
 export type QueueItemType = 'temperature' | 'state';
 

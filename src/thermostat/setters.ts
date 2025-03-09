@@ -2,7 +2,11 @@
 import {CharacteristicValue} from 'homebridge';
 import {SleepmePlatformAccessory} from '../platformAccessory.js';
 import {ApiQueue} from '../queue/apiQueue.js';
-import {celsiusToFahrenheit} from '../utils.js';
+
+// Define utility function inline to avoid import issues
+function celsiusToFahrenheit(tempC: number): number {
+  return Math.round((tempC * 9/5) + 32);
+}
 
 interface Setters {
   setTargetState(value: CharacteristicValue): Promise<void>
