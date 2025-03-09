@@ -1,7 +1,7 @@
 // src/readThroughCache.ts
 import {Client, DeviceStatus, ClientResponse} from './sleepme/client';
 import {Logger} from 'homebridge';
-import {AxiosError} from 'axios';
+import axios, {AxiosError} from 'axios';
 
 class ReadThroughCache {
   private value?: ClientResponse<DeviceStatus>;
@@ -85,12 +85,13 @@ class ReadThroughCache {
   
   // Force an immediate refresh of the cache
   refresh(): Promise<null | ClientResponse<DeviceStatus>> {
-    if (this.request) {
-      return this.request;
-    }
+    // Clear any in-flight request
+    this.request = undefined;
     
     // Invalidate existing cache
     this.responseExpireAt = undefined;
+    
+    // Make a fresh request
     return this.get();
   }
   
@@ -106,18 +107,6 @@ class ReadThroughCache {
   // Check if we're currently in an error state
   hasError(): boolean {
     return this.errorCount > 0;
-  }
-  
-  // Force an immediate refresh of the cache
-  refresh(): Promise<null | ClientResponse<DeviceStatus>> {
-    // Clear any in-flight request
-    this.request = undefined;
-    
-    // Invalidate existing cache
-    this.responseExpireAt = undefined;
-    
-    // Make a fresh request
-    return this.get();
   }
 }
 
