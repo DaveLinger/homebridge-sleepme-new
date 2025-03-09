@@ -20,13 +20,15 @@ export type PluginConfig = {
   sleepme_api_url: string;
 };
 
+// Update this function in src/platform.ts
 const validateConfig = (config: PlatformConfig): [boolean, string] => {
   if (!config.api_keys || !Array.isArray(config.api_keys)) {
     return [false, 'No API keys configured - plugin will not start'];
   }
 
+  // Set a default API URL if none provided
   if (!config.sleepme_api_url) {
-    return [false, 'Missing SleepMe API URL - plugin will not start'];
+    config.sleepme_api_url = 'https://api.developer.sleep.me/v1';
   }
 
   if (config.api_keys.some((s: unknown) => typeof s !== 'string')) {
