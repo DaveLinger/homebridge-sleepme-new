@@ -4,7 +4,8 @@
       clearTimeout(this.backoffTimer);
       this.backoffTimer = undefined;
     }
-  }// src/readThroughCache.ts
+  }
+}// src/readThroughCache.ts
 import {Client, DeviceStatus, ClientResponse} from './sleepme/client';
 import {Logger} from 'homebridge';
 import axios, {AxiosError} from 'axios';
