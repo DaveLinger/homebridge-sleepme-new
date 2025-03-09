@@ -250,18 +250,29 @@ export class ApiQueue {
       const actualState = response.data;
       let mismatch = false;
       
-      // Check if temperature matches
-      if (desiredState.targetTemperatureC !== undefined && 
-          Math.abs(actualState.control.set_temperature_c - desiredState.targetTemperatureC) > 0.1) {
-        this.logger.warn(
-          `Temperature mismatch for device ${deviceId}: ` +
-          `desired=${desiredState.targetTemperatureC}°C, ` +
-          `actual=${actualState.control.set_temperature_c}°C`
-        );
-        mismatch = true;
+      // Check if temperature matches (with 0.5°C tolerance)
+      if (desiredState.targetTemperatureC !== undefined) {
+        const temperatureDifference = Math.abs(actualState.control.set_temperature_c - desiredState.targetTemperatureC);
+        const tolerance = 0.5; // Allow 0.5°C difference to account for rounding
         
-        // Re-queue the temperature update
-        this.enqueue(deviceId, 'temperature', desiredState.targetTemperatureC);
+        if (temperatureDifference > tolerance) {
+          this.logger.warn(
+            `Temperature mismatch for device ${deviceId}: ` +
+            `desired=${desiredState.targetTemperatureC}°C, ` +
+            `actual=${actualState.control.set_temperature_c}°C`
+          );
+          mismatch = true;
+          
+          // Re-queue the temperature update
+          this.enqueue(deviceId, 'temperature', desiredState.targetTemperatureC);
+        } else if (temperatureDifference > 0.01) {
+          // There is a small difference, but within tolerance
+          this.logger.debug(
+            `Temperature within tolerance for device ${deviceId}: ` +
+            `desired=${desiredState.targetTemperatureC}°C, ` +
+            `actual=${actualState.control.set_temperature_c}°C (diff: ${temperatureDifference.toFixed(2)}°C)`
+          );
+        }
       }
       
       // Check if state matches
