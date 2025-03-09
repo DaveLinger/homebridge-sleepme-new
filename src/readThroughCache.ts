@@ -1,6 +1,6 @@
 import {Client, DeviceStatus, ClientResponse} from './sleepme/client';
 import {Logger} from 'homebridge';
-import {AxiosError} from 'axios';
+import axios, {AxiosError} from 'axios';
 
 class ReadThroughCache {
   private value?: ClientResponse<DeviceStatus>;
@@ -47,17 +47,23 @@ class ReadThroughCache {
       this.errorCount = 0;
       
       return response;
-    }).catch((err: Error | AxiosError) => {
+    }).catch((err: unknown) => {
       this.errorCount += 1;
       
       // Log detailed error information
-      this.log.error(`API error for device ${this.deviceId}: ${err.message}`);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.log.error(`API error for device ${this.deviceId}: ${errorMessage}`);
       
       // If it's an Axios error, log more details
       if (axios.isAxiosError(err)) {
-        this.log.error(`HTTP status: ${err.response?.status || 'unknown'}`);
-        this.log.error(`Request URL: ${err.config?.url || 'unknown'}`);
-        this.log.error(`Request method: ${err.config?.method || 'unknown'}`);
+        if (err.response) {
+          this.log.error(`HTTP status: ${err.response.status || 'unknown'}`);
+        }
+        
+        if (err.config) {
+          this.log.error(`Request URL: ${err.config.url || 'unknown'}`);
+          this.log.error(`Request method: ${err.config.method || 'unknown'}`);
+        }
         
         // Check if this might be a rate limit issue
         if (err.response?.status === 429) {
