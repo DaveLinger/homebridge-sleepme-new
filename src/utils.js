@@ -1,4 +1,5 @@
-// src/utils/temperature.ts
+// src/utils.ts
+// This single file contains all utility functions 
 
 /**
  * Converts Celsius to Fahrenheit with proper rounding

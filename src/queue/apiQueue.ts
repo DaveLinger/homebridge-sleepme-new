@@ -1,8 +1,8 @@
 // src/queue/apiQueue.ts
 import { Logger } from 'homebridge';
-import { Client, DeviceStatus } from '../sleepme/client';
-import ReadThroughCache from '../readThroughCache';
-import { celsiusToFahrenheit, expectedCelsiusAfterConversion, temperaturesEqual } from '../utils/temperature';
+import { Client, DeviceStatus } from '../sleepme/client.js';
+import ReadThroughCache from '../readThroughCache.js';
+import { celsiusToFahrenheit, expectedCelsiusAfterConversion, temperaturesEqual } from '../utils.js';
 
 export type QueueItemType = 'temperature' | 'state';
 
