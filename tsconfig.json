@@ -14,13 +14,16 @@
     "moduleResolution":"node",
     "sourceMap": true,
     "strict": true,
-    "target": "ES2022"
+    "target": "ES2022",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false
   },
   "include": [
     "eslint.config.mjs",
     "node_modules/hap-nodejs/@types/",
     "homebridge-ui",
-    "src"
+    "src/**/*.ts"
   ],
   "exclude": ["src/fakeserver/**.*", "src/**/*.test.ts"],
   "files": ["src/index.ts"]
