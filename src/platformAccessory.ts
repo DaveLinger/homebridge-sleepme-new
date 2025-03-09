@@ -22,7 +22,14 @@ export class SleepmePlatformAccessory {
   ) {
     const {Characteristic, Service} = this.platform;
     const {apiKey, device} = this.accessory.context as SleepmeContext;
-    const client = new Client(apiKey);
+    
+    // Create client with logging
+    const client = new Client(
+      apiKey, 
+      this.platform.config.sleepme_api_url, 
+      (message) => this.platform.log.debug(`[${device.name}] ${message}`)
+    );
+    
     const readThroughCache = new ReadThroughCache(client, device.id, platform.log);
     this.accessory.getService(Service.AccessoryInformation)!
       .setCharacteristic(Characteristic.Manufacturer, 'Sleepme')

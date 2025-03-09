@@ -1,4 +1,4 @@
-import axios, {AxiosInstance} from 'axios';
+import axios, {AxiosInstance, AxiosError} from 'axios';
 
 export type ClientResponse<T> = {
   data: T;
@@ -8,10 +8,61 @@ export type ClientResponse<T> = {
 export class Client {
   readonly token: string;
   private readonly axiosClient: AxiosInstance;
+  private readonly logger?: (message: string) => void;
 
-  constructor(token: string, baseURL = 'https://api.developer.sleep.me') {
+  constructor(token: string, baseURL = 'https://api.developer.sleep.me', logger?: (message: string) => void) {
     this.token = token;
+    this.logger = logger;
     this.axiosClient = axios.create({baseURL: baseURL});
+    
+    // Add response interceptor to log all responses
+    this.axiosClient.interceptors.response.use(
+      (response) => {
+        if (this.logger) {
+          this.logger(`API Response: ${response.config.method?.toUpperCase()} ${response.config.url} - Status: ${response.status}`);
+        }
+        return response;
+      },
+      (error: AxiosError) => {
+        if (this.logger) {
+          const status = error.response?.status || 'Unknown';
+          const method = error.config?.method?.toUpperCase() || 'Unknown';
+          const url = error.config?.url || 'Unknown';
+          this.logger(`API Error: ${method} ${url} - Status: ${status} - ${error.message}`);
+          
+          // If there's response data, log that too
+          if (error.response?.data) {
+            this.logger(`Error details: ${JSON.stringify(error.response.data)}`);
+          }
+          
+          // Log rate limit headers if they exist
+          const rateLimitLimit = error.response?.headers?.['x-ratelimit-limit'];
+          const rateLimitRemaining = error.response?.headers?.['x-ratelimit-remaining'];
+          const rateLimitReset = error.response?.headers?.['x-ratelimit-reset'];
+          
+          if (rateLimitLimit || rateLimitRemaining || rateLimitReset) {
+            this.logger(`Rate limit info - Limit: ${rateLimitLimit}, Remaining: ${rateLimitRemaining}, Reset: ${rateLimitReset}`);
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+    
+    // Add request interceptor to log all requests
+    this.axiosClient.interceptors.request.use(
+      (config) => {
+        if (this.logger) {
+          this.logger(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+        }
+        return config;
+      },
+      (error) => {
+        if (this.logger) {
+          this.logger(`Request error: ${error.message}`);
+        }
+        return Promise.reject(error);
+      }
+    );
   }
 
   headers(): object {
@@ -79,4 +130,3 @@ export type DeviceStatus = {
     water_temperature_c: number;
   };
 };
-
